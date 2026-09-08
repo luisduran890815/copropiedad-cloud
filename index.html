@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Balcones de Villa Carolina - Sistema de Mantenimiento</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div id="login" class="center">
+    <form id="loginForm" class="card login">
+        <h1>Mantenimiento Copropiedad</h1>
+        <h2 class="loginSubtitulo">Balcones de Villa Carolina - Bloque B</h2>
+        <p>Sistema de gestión y seguimiento de solicitudes de mantenimiento</p>
+        <input id="email" type="email" placeholder="Correo" required>
+        <input id="password" type="password" placeholder="Contraseña" required>
+        <button>Ingresar</button>
+        <small id="loginMsg"></small>
+    </form>
+</div>
+<div id="app" class="hidden">
+    <header>
+        <div>
+            <h1>Control de Mantenimiento</h1>
+            <p class="copropiedadTitulo">Copropiedad Balcones de Villa Carolina - Bloque B</p>
+            <p id="usuario"></p>
+        </div>
+        <div class="actions">
+            <button id="excel">Excel</button>
+            <button id="salir" class="secondary">Salir</button>
+        </div>
+    </header>
+    <main>
+        <section class="stats">
+            <article><span>Total</span><b id="stTotal">0</b></article>
+            <article><span>Pendientes</span><b id="stPend">0</b></article>
+            <article><span>Ejecutadas</span><b id="stEjec">0</b></article>
+            <article><span>Coste</span><b id="stCosto">$0</b></article>
+        </section>
+        <section class="card">
+            <h2>Nueva solicitud</h2>
+            <form id="solForm" class="grid">
+                <input id="solicitante" placeholder="Solicitante">
+                <input id="ubicacion" placeholder="Ubicación / zona" required>
+                <textarea id="descripcion" placeholder="Descripción" required></textarea>
+                <select id="prioridad">
+                    <option>Baja</option><option selected>Media</option><option>Alta</option><option>Urgente</option>
+                </select>
+                <select id="estado">
+                    <option>Pendiente</option><option>Programada</option><option>En ejecución</option><option>Ejecutada</option><option>Archivada</option>
+                </select>
+                <label>Fecha ejecución<input id="fechaEjecucion" type="date"></label>
+                <input id="contratista" placeholder="Contratista">
+                <input id="costo" type="number" min="0" placeholder="Coste final COP">
+                <label>Fotos antes<input id="fotosAntes" type="file" accept="image/*" multiple></label>
+                <label>Fotos después<input id="fotosDespues" type="file" accept="image/*" multiple></label>
+                <textarea id="observaciones" placeholder="Observaciones de cierre"></textarea>
+                <button>Guardar en la nube</button>
+            </form>
+            <p id="formMsg"></p>
+        </section>
+        <section class="card">
+            <div class="toolbar">
+                <input id="buscar" placeholder="Buscar...">
+                <select id="filtro"><option value="">Todos los estados</option>
+                    <option>Pendiente</option><option>Programada</option><option>En ejecución</option><option>Ejecutada</option><option>Archivada</option>
+                </select>
+            </div>
+            <div id="lista"></div>
+        </section>
+    </main>
+</div>
+<div id="modal" class="modal hidden">
+    <div class="card modalBox"><button id="cerrarModal" class="x">×</button><div id="detalle"></div></div>
+</div>
+<footer class="footer">
+    <div class="footer-content">
+        <strong>Sistema de Gestión de Mantenimiento</strong><br>
+        Copropiedad Balcones de Villa Carolina - Bloque B<br><br>
+        © 2026 Luis Eduardo Durán Mora<br>
+        Todos los derechos reservados<br>
+        Versión 1.0
+    </div>
+</footer>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

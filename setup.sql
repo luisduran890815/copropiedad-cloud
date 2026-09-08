@@ -1,0 +1,24 @@
+create extension if not exists pgcrypto;
+create table if not exists public.profiles(id uuid primary key references auth.users(id) on delete cascade,email text,role text not null default 'consulta' check(role in('admin','operador','consulta')),created_at timestamptz default now());
+create or replace function public.handle_new_user() returns trigger language plpgsql security definer set search_path=public as $$ begin insert into public.profiles(id,email) values(new.id,new.email) on conflict(id) do nothing; return new; end $$;
+drop trigger if exists on_auth_user_created on auth.users;create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
+create sequence if not exists public.solicitud_codigo_seq start 1;
+create table if not exists public.solicitudes(id uuid primary key default gen_random_uuid(),codigo text unique not null default ('SOL-'||lpad(nextval('public.solicitud_codigo_seq')::text,5,'0')),solicitante text,ubicacion text not null,descripcion text not null,prioridad text not null default 'Media',estado text not null default 'Pendiente',fecha_ejecucion date,contratista text,costo numeric(14,2) default 0,observaciones text,created_by uuid references auth.users(id),created_at timestamptz default now());
+create table if not exists public.evidencias(id uuid primary key default gen_random_uuid(),solicitud_id uuid not null references public.solicitudes(id) on delete cascade,path text not null,tipo text not null check(tipo in('antes','despues')),nombre text,created_by uuid references auth.users(id),created_at timestamptz default now());
+alter table public.profiles enable row level security;alter table public.solicitudes enable row level security;alter table public.evidencias enable row level security;
+create or replace function public.my_role() returns text language sql stable security definer set search_path=public as $$select role from public.profiles where id=auth.uid()$$;
+drop policy if exists profiles_own on public.profiles;create policy profiles_own on public.profiles for select to authenticated using(id=auth.uid());
+drop policy if exists solicitudes_read on public.solicitudes;create policy solicitudes_read on public.solicitudes for select to authenticated using(true);
+drop policy if exists solicitudes_insert on public.solicitudes;create policy solicitudes_insert on public.solicitudes for insert to authenticated with check(public.my_role() in('admin','operador') and created_by=auth.uid());
+drop policy if exists solicitudes_update on public.solicitudes;create policy solicitudes_update on public.solicitudes for update to authenticated using(public.my_role() in('admin','operador')) with check(public.my_role() in('admin','operador'));
+drop policy if exists solicitudes_delete_admin on public.solicitudes;create policy solicitudes_delete_admin on public.solicitudes for delete to authenticated using(public.my_role()='admin');
+drop policy if exists evidencias_read on public.evidencias;create policy evidencias_read on public.evidencias for select to authenticated using(true);
+drop policy if exists evidencias_insert on public.evidencias;create policy evidencias_insert on public.evidencias for insert to authenticated with check(public.my_role() in('admin','operador') and created_by=auth.uid());
+drop policy if exists evidencias_delete_admin on public.evidencias;create policy evidencias_delete_admin on public.evidencias for delete to authenticated using(public.my_role()='admin');
+insert into storage.buckets(id,name,public) values('mantenimiento','mantenimiento',false) on conflict(id) do update set public=false;
+drop policy if exists storage_read_auth on storage.objects;create policy storage_read_auth on storage.objects for select to authenticated using(bucket_id='mantenimiento');
+drop policy if exists storage_insert_staff on storage.objects;create policy storage_insert_staff on storage.objects for insert to authenticated with check(bucket_id='mantenimiento' and public.my_role() in('admin','operador'));
+drop policy if exists storage_delete_admin on storage.objects;create policy storage_delete_admin on storage.objects for delete to authenticated using(bucket_id='mantenimiento' and public.my_role()='admin');
+grant usage on schema public to authenticated;grant select on public.profiles to authenticated;grant select,insert,update,delete on public.solicitudes,public.evidencias to authenticated;grant usage,select on sequence public.solicitud_codigo_seq to authenticated;
+-- Tras crear tu primer usuario, cambia SU_CORREO por su correo y ejecuta:
+-- update public.profiles set role='admin' where email='SU_CORREO';
